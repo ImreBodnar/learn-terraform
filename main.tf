@@ -96,14 +96,6 @@ data "aws_ami" "latest-amazon-linux-image" {
     }
 }
 
-output "aws_ami_id" {
-    value = data.aws_ami.latest-amazon-linux-image.id
-}
-
-output "ec2_public_ip" {
-    value = aws_instance.myapp-server.public_ip
-}
-
 resource "aws_key_pair" "ssh-key" {
     key_name = "server-key"
     public_key = file(var.public_key_location)
@@ -120,7 +112,20 @@ resource "aws_instance" "myapp-server" {
     associate_public_ip_address = true
     key_name = aws_key_pair.ssh-key.key_name
 
+    # Így lehet Linux parancsokat futtatni a szerveren a létrehozás után.
+    user_data = file("entry-script.sh")
+
+    user_data_replace_on_change = true
+
     tags = {
         Name: "${var.env_prefix}-server"
     }
+}
+
+# OUTPUTS
+output "aws_ami_id" {
+    value = data.aws_ami.latest-amazon-linux-image.id
+}
+output "ec2_public_ip" {
+    value = aws_instance.myapp-server.public_ip
 }
